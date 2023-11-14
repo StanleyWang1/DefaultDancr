@@ -19,8 +19,7 @@ classdef map
             obj.box_px = size(obj.img, 1) / obj.dim;
         end
         %% MAP PLOTTER
-        function draw_map(obj, fig_num)
-            figure(fig_num)
+        function draw_map(obj)
             % Plot Image
             h = imshow(obj.img);
             set(h, 'AlphaData', 0.5);
@@ -35,11 +34,17 @@ classdef map
             scaledYTickValues = yticks/obj.box_px; yticklabels(arrayfun(@num2str, scaledYTickValues, 'UniformOutput', false));
         end
         %% STORM PLOTTER
-        function draw_storm(obj, fig_num, c, r)
+        function P = initialize_storm(obj)
+            P = patch('Faces', [], 'Vertices', [], 'FaceColor', [165/255 ,81/255, 227/255], 'FaceAlpha', 0.5);
+        end
+        function update_storm(obj, P, c, r)
+            [F, V] = get_storm(obj, c, r);
+            set(P, 'Faces', F, 'Vertices', V);
+        end
+        function [F, V] = get_storm(obj, c, r)
             cx = c(1); cy = c(2); % center of storm circle
-            figure(fig_num)
             F = []; V = []; iters = 0; % initialize patch face/vertex data
-            % Generate patches
+            % Generate patch faces and vertices
             for xi = 1:obj.dim
                 for yi = 1:obj.dim
                    if norm([xi-cx, yi-cy]) >= r % if in storm
@@ -53,20 +58,22 @@ classdef map
                    end
                 end
             end
-            % Draw Patch only once for efficiency
-            patch('Faces', F, 'Vertices', V, 'FaceColor', [165/255 ,81/255, 227/255], 'FaceAlpha', 0.5);
         end
-        %% AGENT PLOTTER
-        function draw_agent(obj, fig_num, x, y, color)
-            % Plot agent at x and y
-            figure(fig_num)
+        %% AGENT PLOTTING FUNCTIONS
+        function P = initialize_agent(obj)
+            P = patch('Faces', [], 'Vertices', [], 'FaceColor', 'red');
+        end
+        function update_agent(obj, P, x, y)
+            [F, V] = obj.get_agent(x, y);
+            set(P, 'Faces', F, 'Vertices', V);
+        end
+        function [F, V] = get_agent(obj, x, y)
+            % Faces and vertices for agent at x and y
             BLx = obj.box_px*(x-1); 
             BLy = obj.box_px*(y-1);
             sidelength = obj.box_px;
-            patch('Faces', [1, 2, 3, 4], 'Vertices', [BLx, BLy; ...
-                BLx+sidelength, BLy; BLx+sidelength, ...
-                BLy+sidelength; BLx, BLy+sidelength], ...
-                'FaceColor', color);
+            F = [1, 2, 3, 4];
+            V = [BLx, BLy; BLx+sidelength, BLy; BLx+sidelength, BLy+sidelength; BLx, BLy+sidelength];
         end
     end
 end
