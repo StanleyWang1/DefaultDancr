@@ -75,5 +75,34 @@ classdef map
             F = [1, 2, 3, 4];
             V = [BLx, BLy; BLx+sidelength, BLy; BLx+sidelength, BLy+sidelength; BLx, BLy+sidelength];
         end
+        %% REWARD OVERLAY PLOTTING FUNCTION
+        function P = initialize_reward(obj)
+            numColors = 256;
+            customColormap = [linspace(1, 0, numColors)', linspace(0, 1, numColors)', zeros(numColors, 1)];
+            % colormap(customColormap); % You can choose a different colormap
+            P = patch('Faces', [], 'Vertices', []);
+        end
+        function update_reward(obj, P, R)
+            [F, V, C] = obj.get_reward(R);
+            set(P, 'Faces', F, 'Vertices', V, 'FaceVertexCData',C,'FaceColor','flat', 'FaceAlpha', 0.5);
+        end
+        function [F, V, C] = get_reward(obj, R)
+            F = []; V = []; iters = 0; % initialize patch face/vertex data
+            C = [];
+            % Generate patch faces and vertices
+            for xi = 1:obj.dim
+                for yi = 1:obj.dim
+                   BLx = obj.box_px*(xi-1); 
+                   BLy = obj.box_px*(yi-1);
+                   F = [F; [1, 2, 3, 4]+4*iters];
+                   V = [V; [BLx, BLy; BLx+obj.box_px, BLy; BLx+obj.box_px, BLy+obj.box_px; BLx, BLy+obj.box_px]];
+                   iters = iters + 1;
+                   % Map reward R(x,y) to color
+                   Rxy = R(xi, yi);
+                   % normalized_Rxy = (Rxy + 1000) / (100 + 1000); % assume Rxy between [-1000,100]
+                   C = [C; Rxy];
+                end
+            end
+        end
     end
 end

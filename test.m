@@ -13,14 +13,11 @@ figure(1)
 M.draw_map();
 hold on;
 
-%% INITIALIZE AGENTS
-num_agents = 10;
-AGENTS.handle = cell(num_agents, 1); % array of graphics handle for agents
-AGENTS.x = randi([0, M.dim], num_agents, 1);
-AGENTS.y = randi([0, M.dim], num_agents, 1);
-for i = 1:num_agents
-    AGENTS.handle{i} = M.initialize_agent();
-end
+%% INITIALIZE REWARD OVERLAY
+Re = reward();
+REWARD = M.initialize_reward();
+clim([-100, 100]);
+colorbar;
 
 %% INITIALIZE STORM
 ticks = 200; % total number of time steps (part of STATE)
@@ -34,15 +31,30 @@ x_dash = r(end)*M.box_px * cos(theta) + (cx(end)-0.5)*M.box_px;
 y_dash = r(end)*M.box_px * sin(theta) + (cy(end)-0.5)*M.box_px;
 plot(x_dash, y_dash, '-', 'LineWidth', 3, 'Color', [165/255 ,81/255, 227/255]);
 
+%% INITIALIZE AGENTS
+num_agents = 10;
+AGENTS.handle = cell(num_agents, 1); % array of graphics handle for agents
+AGENTS.x = randi([0, M.dim], num_agents, 1);
+AGENTS.y = randi([0, M.dim], num_agents, 1);
+for i = 1:num_agents
+    AGENTS.handle{i} = M.initialize_agent();
+end
+
 % Video creation
-% vidfile = VideoWriter('demo_storm_closure', 'MPEG-4');
-% vidfile.FrameRate = 30;
-% vidfile.Quality = 100;
-% open(vidfile);
+vidfile = VideoWriter('reward_overlay', 'MPEG-4');
+vidfile.FrameRate = 30;
+vidfile.Quality = 100;
+open(vidfile);
 
 %% SIMULATE
+rng(228);
 for i = 1:ticks
-    M.update_storm(STORM, [cx(i), cy(i)], r(i))
+    % STORM Overlay
+    % M.update_storm(STORM, [cx(i), cy(i)], r(i))
+    % REWARD Overlay
+    storm.x = cx(i); storm.y = cy(i); storm.r = r(i);
+    Re = Re.update_storm(storm);
+    M.update_reward(REWARD, Re.Rmap + Re.Rstorm);
     for j = 1:num_agents
         R = randi([1, 5]);
         if R == 1
@@ -57,10 +69,11 @@ for i = 1:ticks
         M.update_agent(AGENTS.handle{j}, AGENTS.x(j), AGENTS.y(j))
     end
     % Capture and write frame
-    % frm = getframe(gcf);
-    % im = imresize(frame2im(frm),1);
-    % writeVideo(vidfile,im)
-    pause(1/30)
+    frm = getframe(gcf);
+    im = imresize(frame2im(frm),1);
+    writeVideo(vidfile,im)
+    % pause(1/100);
 end
-% close(vidfile)
+close(vidfile)
+
 % set(gcf, 'position', [ 1   676   208*3   165*3]);
