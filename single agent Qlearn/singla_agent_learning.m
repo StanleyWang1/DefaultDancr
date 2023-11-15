@@ -26,7 +26,7 @@ cx = linspace(20, 30, 200); cy = linspace(20, 30, 200); % storm center evolution
 % Initialize reward
 R = reward();
 
-samples = 2e6; 
+samples = 5e6; 
 DATA = cell(samples, 4);
 
 for n = 1:samples
@@ -62,7 +62,4 @@ for n = 1:samples
     DATA{n,4} = sp;
     disp(n);
 end
-
-
-
-
+save DATA_5mil.mat DATA
