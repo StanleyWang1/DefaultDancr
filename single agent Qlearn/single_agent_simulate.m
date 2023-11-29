@@ -19,7 +19,7 @@ cx = linspace(20, 30, 200); cy = linspace(20, 30, 200); % storm center evolution
 % rng(505); % start in bottom left
 
 %% LOAD PRE-TRAINED POLICY
-policy = readtable("policy.txt").Var1;
+policy = readtable("policy_mil_x250.txt").Var1;
 
 %% INITIALIZE MAP ASSET
 imagepath = '/Users/stanleywang/Documents/GitHub/DefaultDancr/assets/map.jpeg';
@@ -43,12 +43,22 @@ y_dash = r(end)*M.box_px * sin(theta) + (cy(end)-0.5)*M.box_px;
 plot(x_dash, y_dash, '-', 'LineWidth', 3, 'Color', [165/255 ,81/255, 227/255]);
 
 %% INITIALIZE AGENTS
-AGENT.handle = M.initialize_agent();
+x = [10 15 20 25 30 35 40];
+y = [10 15 20 25 30 35 40];
+AGENTS = cell(49,1);
+for i = 1:7
+    for j = 1:7
+        ind = sub2ind([7, 7], i, j);
+        AGENTS{ind}.handle = M.initialize_agent();
+        AGENTS{ind}.x = x(i);
+        AGENTS{ind}.y = y(j);
+    end
+end
 % AGENT.x = randi([1 50]); AGENT.y = randi([1 50]); % random starting location
-AGENT.x = 45; AGENT.y = 8;
+% AGENT.x = 45; AGENT.y = 8;
 
 %% Video creation
-vidfile = VideoWriter('reward4.mp4', 'MPEG-4');
+vidfile = VideoWriter('agent49_reward.mp4', 'MPEG-4');
 vidfile.FrameRate = 30;
 vidfile.Quality = 100;
 open(vidfile);
@@ -61,18 +71,20 @@ for i = 1:ticks
         storm.x = cx(i); storm.y = cy(i); storm.r = r(i);
         M.update_reward(REWARD, Re.Rmap + Re.get_storm(storm));
     % DRAW AND UPDATE AGENT
-    M.update_agent(AGENT.handle, AGENT.x, AGENT.y);
-    s = sub2ind([50, 50, 200], AGENT.x, AGENT.y, i); % linear state
-    a = policy(s);
-    switch a
-        case 1
-            AGENT.y = AGENT.y + 1; % up
-        case 2
-            AGENT.y = AGENT.y - 1; % down
-        case 3
-            AGENT.x = AGENT.x - 1; % left
-        case 4
-            AGENT.x = AGENT.x + 1; % right
+    for a = 1:49
+        M.update_agent(AGENTS{a}.handle, AGENTS{a}.x, AGENTS{a}.y);
+        s = sub2ind([50, 50, 200], AGENTS{a}.x, AGENTS{a}.y, i); % linear state
+        action = policy(s);
+        switch action
+            case 1
+                AGENTS{a}.y = min(max(AGENTS{a}.y + 1, 1), 50); % up
+            case 2
+                AGENTS{a}.y = min(max(AGENTS{a}.y - 1, 1), 50); % down
+            case 3
+                AGENTS{a}.x = min(max(AGENTS{a}.x - 1, 1), 50); % left
+            case 4
+                AGENTS{a}.x = min(max(AGENTS{a}.x + 1, 1), 50); % right
+        end
     end
     % Capture and write frame
     frm = getframe(gcf);
