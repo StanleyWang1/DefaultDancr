@@ -28,7 +28,7 @@ U = zeros(500000, 1);
 % Initialize reward
 R = reward();
 % Discount Factor
-gamma = 0.9;
+gamma = 0.65;
 
 dU_norms = zeros(100,1);
 for iters = 1:100
@@ -55,10 +55,10 @@ for iters = 1:100
     end
     U = U + dU;
     dU_norms(iters) = norm(dU, Inf);
-    disp(norm(dU, Inf));
+    disp(iters);
 end
 
-% save('value_iter_gamma_0p95.mat', 'U', 'y');
+save('value_iter_gamma_0p65.mat', 'U', 'dU_norms');
 
 function [xp, yp, tp] = transition(x, y, t, a)
     switch a
